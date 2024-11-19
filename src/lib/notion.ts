@@ -1,6 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Client } from "@notionhq/client";
 
+import {
+  PageObjectResponse,
+  QueryDatabaseResponse,
+} from "@notionhq/client/build/src/api-endpoints";
+
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
 export async function fetchDatabaseSchema(databaseId: string) {
@@ -116,4 +121,21 @@ export async function fetchAllNotionRows(databaseId: string) {
   } while (cursor);
 
   return rows;
+}
+
+export async function fetchFirstNRows(
+  databaseId: string,
+  n: number
+): Promise<PageObjectResponse[]> {
+  const response = (await notion.databases.query({
+    database_id: databaseId,
+    page_size: n,
+  })) as QueryDatabaseResponse;
+
+  // Filter out any partial responses
+  const fullPages = response.results.filter(
+    (result): result is PageObjectResponse => "properties" in result
+  );
+
+  return fullPages;
 }
